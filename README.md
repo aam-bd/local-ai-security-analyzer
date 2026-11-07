@@ -118,6 +118,40 @@ A resource-constrained cybersecurity log analyzer web application powered by a l
 
 ---
 
+## Testing Under Strict Hardware Constraints
+
+To rigorously verify and test the application under the exact specified limits:
+- **Server RAM**: 4 GB total
+- **CPU / GPU**: 2 vCPU, no GPU
+- **Model Context**: 2,048 tokens per call
+
+### Option A: Using Isolated Virtual Environment & Constrained Runner
+1. **Set Up Clean Virtual Environment**:
+   ```powershell
+   .\setup_venv.ps1
+   ```
+   *(Or run `setup_venv.bat`)*
+
+2. **Run Dedicated Resource Constraint Test**:
+   ```powershell
+   python -m unittest tests/test_resource_constraints.py
+   ```
+   *Pins the process to 2 vCPUs (`affinity [0, 1]`), disables GPUs (`CUDA_VISIBLE_DEVICES="-1"`), and asserts that peak memory remains strictly under 4,096 MB.*
+
+3. **Start the Web App in Constrained Mode**:
+   ```powershell
+   .\run_constrained.ps1
+   ```
+   *(Or run `run_constrained.bat` / `python run_constrained.py`)*
+
+### Option B: Docker Container Limits (Optional)
+If running via Docker, you can enforce the hardware limits at the OS kernel level:
+```bash
+docker run -p 8000:8000 --cpus="2" --memory="4g" --memory-swap="4g" cultive8-log-analyzer
+```
+
+---
+
 ## Verified Security Findings on Benchmark Log
 
 When analyzing `Cultive8_Workspace_Agrigen_Server.log` (258 lines, ~22,000 tokens):
