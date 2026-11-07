@@ -80,7 +80,8 @@ async def load_sample_log():
 async def stream_analysis(
     resume_from: int = Query(1, ge=1),
     reduce_calls: bool = Query(False),
-    lines_per_chunk: int = Query(8, ge=2, le=50)
+    lines_per_chunk: int = Query(8, ge=2, le=50),
+    max_log_tokens: int = Query(1350, ge=500, le=1400)
 ):
     """Server-Sent Events (SSE) streaming real-time analysis progress."""
     global current_active_file
@@ -94,7 +95,8 @@ async def stream_analysis(
             target_file,
             resume_from_chunk=resume_from,
             reduce_calls=reduce_calls,
-            lines_per_chunk=lines_per_chunk
+            lines_per_chunk=lines_per_chunk,
+            max_log_tokens=max_log_tokens
         ):
             data_str = json.dumps(event)
             yield f"data: {data_str}\n\n"

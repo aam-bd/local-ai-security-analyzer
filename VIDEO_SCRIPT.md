@@ -10,11 +10,11 @@
 | Timestamp | Section | Visual on Screen | Key Talking Points |
 | :---: | :--- | :--- | :--- |
 | **0:00 - 0:45** | **1. Introduction & The Challenge** | Web UI at `http://localhost:8000` | State the problem: 20,000-token server log exceeds local model's 2,048-token context window; hardware ceiling is 4 GB RAM and 2 vCPUs without GPU. |
-| **0:45 - 1:45** | **2. Architecture & Token Budget Math** | Architecture diagram in `README.md` & code in `chunker.py` | Explain greedy line chunker (max 950 tokens/chunk), 1-based original line preservation, and exact token budget math (400 prompt + 250 context + 950 log + 400 reply + 48 safety buffer = 2,048 tokens). |
-| **1:45 - 2:45** | **3. Live Application Demo** | Web Dashboard | Click "Load Benchmark Log", click "Start Security Analysis". Show the real-time progress bar (chunks 1 to 30), live RAM gauge staying well under 4 GB (~80 MB to 1.2 GB), and chunk latency. |
+| **0:45 - 1:45** | **2. Architecture & Token Budget Math** | Architecture diagram in `README.md` & code in `chunker.py` | Explain dynamic line-based chunker (`ceil(lines / lines_per_chunk)` with 950-token safety ceiling), 1-based original line preservation, and exact token budget math (400 prompt + 250 context + 950 log + 400 reply + 48 safety buffer = 2,048 tokens). |
+| **1:45 - 2:45** | **3. Live Application Demo** | Web Dashboard | Click "Load Benchmark Log", adjust lines per chunk (e.g. 8 lines/chunk), click "Start Security Analysis". Show the real-time progress bar (streaming dynamically generated chunks), live RAM gauge staying well under 4 GB (~80 MB to 600 MB), and chunk latency. |
 | **2:45 - 3:45** | **4. Security Findings & Multi-Stage Correlation** | Correlated Findings View on Dashboard | Highlight the Critical finding: IP `203.0.113.44` failed logins across chunks 1-8, succeeded on line 196, admin recon on line 198, 2.8 MB data export on line 201. Show SQLi, Path Traversal, Rate Limiting, and Prompt Injection (line 217). |
 | **3:45 - 4:30** | **5. Reliability, Negative Controls & Defense** | Code in `prompts.py` & `correlator.py` | Explain anti-prompt-injection isolation (`<untrusted_server_logs>`), resilient JSON repair, and suppression of benign events (single typo, health checks, DB retries, deploy 503). |
-| **4:30 - 5:00** | **6. Conclusion & Interview Readiness** | Test suite terminal output (`Ran 8 tests in 0.091s OK`) | Run automated tests, demonstrate clean code structure, and conclude. |
+| **4:30 - 5:00** | **6. Conclusion & Interview Readiness** | Test suite terminal output (`Ran 13 tests in 2.1s OK`) | Run automated tests, demonstrate clean code structure, and conclude. |
 
 ---
 
@@ -60,7 +60,7 @@
 
 ### Part 6: Conclusion (4:30 - 5:00)
 > *(Switch to terminal and run `python -m unittest discover tests`)*
-> *"All automated tests pass with 100% accuracy in under one-tenth of a second. The system provides one-click export to JSON and Markdown, supports resuming analysis from checkpoints, and is fully documented in `README.md` and `AI_USAGE.md`. Thank you!"*
+> *"All 13 automated tests pass with 100% accuracy. The system provides one-click export to JSON and Markdown, supports dynamic line-based chunking for any file size, supports resuming analysis from checkpoints, and is fully documented in `README.md` and `AI_USAGE.md`. Thank you!"*
 
 ---
 

@@ -147,5 +147,11 @@ OUTPUT JSON SCHEMA:
 
 ### Mistake 5: Generator Stream Completion Event Drop
 - **Symptom**: When adding the heuristic call-reduction optimization, the final `yield {"type": "complete", "report": ...}` generator block was displaced, causing clients to only receive `chunk_progress` without the completion signal.
+- **Fix**: Re-anchored the completion yield outside the chunk iteration loop so it always fires regardless of fast-pathing.
+
+### Mistake 6: Token Safety Ceiling Overriding User-Configured Lines Per Chunk
+- **Symptom**: When user set chunking to 10 or 12 lines per chunk in the UI, the backend still generated 36 parts.
+- **Root Cause**: The log file averaged 125.7 tokens per line. A hardcoded `max_log_tokens = 950` limit caused chunks to terminate at line 7 or 8 before reaching 10 or 12 lines, clamping the total chunk count at $258 / 7.16 \approx 36$ chunks.
+- **Fix**: Compacted the system prompt from 465 to 222 tokens, freeing up 243 tokens of prompt overhead. Safely raised `max_log_tokens` to 1,350 tokens (worst-case total call: $222 + 50 + 50 + 1350 + 300 = 1,972 \le 2,048$ tokens). Setting 10 lines immediately produced 26 chunks ($\lceil 258/10 \rceil$) and 12 lines produced 25 chunks. Added `--reload` to launch scripts to propagate updates automatically.
 - **Fix**: Re-anchored the terminal completion block to execute strictly outside the chunk iteration loop, ensuring the complete unified report is delivered reliably every time.
 

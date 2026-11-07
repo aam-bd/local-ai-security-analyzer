@@ -213,7 +213,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const reduceCallsParam = reduceCallsCheckbox && reduceCallsCheckbox.checked ? "&reduce_calls=true" : "";
     const linesPerChunkVal = linesPerChunkInput ? (parseInt(linesPerChunkInput.value, 10) || 8) : 8;
-    const eventSource = new EventSource(`/api/analyze/stream?resume_from=${fromChunk}${reduceCallsParam}&lines_per_chunk=${linesPerChunkVal}`);
+    const eventSource = new EventSource(`/api/analyze/stream?resume_from=${fromChunk}${reduceCallsParam}&lines_per_chunk=${linesPerChunkVal}&max_log_tokens=1350`);
 
     eventSource.onmessage = (event) => {
       try {

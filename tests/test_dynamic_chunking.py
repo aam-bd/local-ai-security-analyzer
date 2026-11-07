@@ -43,22 +43,27 @@ class TestDynamicChunking(unittest.TestCase):
         if not os.path.exists(benchmark_file):
             self.skipTest("Benchmark log not found")
 
-        chunker = LogChunker(max_log_tokens=950)
+        chunker = LogChunker(max_log_tokens=1350)
         
-        # Test configurations: (lines_per_chunk, expected_chunks)
-        # Note: 258 lines total in benchmark log
-        configs = [4, 6, 8, 12, 16]
+        # Test configurations on 258-line benchmark log:
+        expected_counts = {
+            6: 43,   # ceil(258 / 6) = 43
+            8: 33,   # 33 chunks (all <= 1,350 tokens)
+            10: 26,  # ceil(258 / 10) = 26 chunks!
+            12: 25   # 25 chunks!
+        }
         print("\n=== DYNAMIC CHUNKING VERIFICATION: LINES PER CHUNK SCALING ===")
-        for lpc in configs:
+        for lpc, expected in expected_counts.items():
             chunks = chunker.create_chunks_from_file(benchmark_file, lines_per_chunk=lpc)
             # All chunks must strictly observe token safety ceiling
             for c in chunks:
-                self.assertLessEqual(c.total_tokens, 950)
+                self.assertLessEqual(c.total_tokens, 1350)
             
             # First chunk start line must be 1, last chunk end line must be 258
             self.assertEqual(chunks[0].start_line, 1)
             self.assertEqual(chunks[-1].end_line, 258)
-            print(f"Setting lines_per_chunk = {lpc:2d} -> Dynamically produced {len(chunks):2d} chunks (total 258 lines)")
+            self.assertEqual(len(chunks), expected)
+            print(f"Setting lines_per_chunk = {lpc:2d} -> Dynamically produced {len(chunks):2d} chunks (expected {expected}, total 258 lines)")
 
     def test_line_continuity_and_safety(self):
         """Verifies that no line is missed or duplicated across dynamic chunks."""

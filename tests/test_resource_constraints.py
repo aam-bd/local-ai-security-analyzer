@@ -44,8 +44,8 @@ class TestResourceConstraints(unittest.TestCase):
         # Check Chunk Token Limits
         chunks = chunker.create_chunks_from_file(log_file)
         for c in chunks:
-            # 950 log tokens + 400 prompt + 250 context + 400 reply + 48 buffer = 2048
-            self.assertLessEqual(c.total_tokens, 955, f"Chunk {c.chunk_index} exceeded token budget!")
+            # 1,350 log tokens + 222 prompt + 50 context + 50 framing + 300 reply + 76 buffer = 2,048
+            self.assertLessEqual(c.total_tokens, 1350, f"Chunk {c.chunk_index} exceeded token budget!")
 
         # Run pipeline under constraints
         last_event = None

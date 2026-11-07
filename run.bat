@@ -12,4 +12,4 @@ if exist .venv\Scripts\python.exe (
 
 echo Server running at http://localhost:8000
 echo ========================================================
-%PYTHON_EXEC% -m uvicorn backend.main:app --host 127.0.0.1 --port 8000
+%PYTHON_EXEC% -m uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload
