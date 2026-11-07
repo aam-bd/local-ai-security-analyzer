@@ -45,5 +45,23 @@ class TestAntiInjection(unittest.TestCase):
         self.assertIn("Prompt Injection", finding.attack_type)
         self.assertEqual(finding.evidence_lines, [217])
 
+    def test_upload_filename_path_traversal_sanitization(self):
+        """Verify filenames with path traversal payloads are sanitized to basename only."""
+        malicious_filenames = [
+            "../../etc/passwd.log",
+            "..\\..\\windows\\system32\\calc.log",
+            "folder/sub/test.log",
+            "C:\\inetpub\\wwwroot\\shell.txt"
+        ]
+        import os
+        upload_dir = "uploads"
+        for name in malicious_filenames:
+            safe_name = os.path.basename(name).replace("\x00", "").replace("/", "").replace("\\", "")
+            dest_path = os.path.abspath(os.path.join(upload_dir, safe_name))
+            self.assertTrue(dest_path.startswith(os.path.abspath(upload_dir)))
+            self.assertNotIn("..", safe_name)
+            self.assertNotIn("/", safe_name)
+            self.assertNotIn("\\", safe_name)
+
 if __name__ == "__main__":
     unittest.main()

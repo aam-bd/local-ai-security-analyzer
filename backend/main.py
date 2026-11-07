@@ -39,11 +39,16 @@ current_active_file: Optional[str] = "Cultive8_Workspace_Agrigen_Server.log"
 async def upload_log_file(file: UploadFile = File(...)):
     """Accepts .log or .txt files, validates extension and size, and stages for analysis."""
     global current_active_file
-    filename = file.filename or "uploaded.log"
-    if not (filename.endswith(".log") or filename.endswith(".txt")):
+    # Path traversal protection: sanitize filename and restrict to upload directory
+    raw_filename = file.filename or "uploaded.log"
+    safe_filename = os.path.basename(raw_filename).replace("\x00", "").replace("/", "").replace("\\", "")
+    if not (safe_filename.endswith(".log") or safe_filename.endswith(".txt")):
         raise HTTPException(status_code=400, detail="Invalid file type. Only .log and .txt files are accepted.")
 
-    dest_path = os.path.join(UPLOAD_DIR, filename)
+    dest_path = os.path.abspath(os.path.join(UPLOAD_DIR, safe_filename))
+    if not dest_path.startswith(os.path.abspath(UPLOAD_DIR)):
+        raise HTTPException(status_code=400, detail="Invalid destination path.")
+
     total_bytes = 0
     with open(dest_path, "wb") as buffer:
         while chunk := await file.read(1024 * 1024):  # 1 MB buffer
@@ -55,9 +60,9 @@ async def upload_log_file(file: UploadFile = File(...)):
     current_active_file = dest_path
     return {
         "status": "success",
-        "filename": filename,
+        "filename": safe_filename,
         "size_bytes": total_bytes,
-        "message": "File uploaded and staged for analysis."
+        "message": "File uploaded safely and staged for analysis."
     }
 
 @app.post("/api/load-sample")
