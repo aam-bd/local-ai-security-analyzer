@@ -143,3 +143,7 @@ OUTPUT JSON SCHEMA:
 - **Symptom**: Simple line-counting broke if blank lines were stripped, causing line numbers in the report to drift away from the actual log file.
 - **Fix**: Maintained an explicit 1-based original line number attribute (`original_line_number`) on every `LogEntry` dataclass, ensuring 100% fidelity to the physical file on disk.
 
+### Mistake 5: Generator Stream Completion Event Drop
+- **Symptom**: When adding the heuristic call-reduction optimization, the final `yield {"type": "complete", "report": ...}` generator block was displaced, causing clients to only receive `chunk_progress` without the completion signal.
+- **Fix**: Re-anchored the terminal completion block to execute strictly outside the chunk iteration loop, ensuring the complete unified report is delivered reliably every time.
+
