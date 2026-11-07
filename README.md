@@ -50,10 +50,11 @@ A resource-constrained cybersecurity log analyzer web application powered by a l
    - Every model call strictly accounts for system instructions, JSON schema, carried working memory, log text, and output reservation.
    - Exact token counting using byte-pair encoding aligned with modern models (`tiktoken` / Qwen vocabulary).
 
-2. **Boundary-Safe Log Splitting & Line Index Preservation**:
+2. **Dynamic Line-Based Chunking & Index Preservation**:
+   - Total chunk count is dynamic ($\lceil L / \text{lines\_per\_chunk} \rceil$) and adapts to any file size (5 lines, 258 lines, 1,000+ lines), never hardcoded.
+   - User-configurable lines per chunk (default: 8 lines) paired with a strict 950-token safety ceiling to prevent 2,048-token context breaches even with unusually long log lines.
    - Streams log files line-by-line without duplicating large files in RAM.
-   - Greedily packs full lines up to the 950-token chunk threshold; never bisects a log entry across parts.
-   - Prefixes each line with its 1-based original line index (`[L{line_number}]`).
+   - Never bisects a log entry across parts; prefixes each line with its 1-based original line index (`[L{line_number}]`).
 
 3. **Multi-Chunk Cross-Event Correlation**:
    - Identifies distributed multi-stage attacks spanning distant parts of the log file:

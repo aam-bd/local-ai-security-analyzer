@@ -22,17 +22,19 @@ class LogAnalyzerPipeline:
         self,
         file_path: str,
         resume_from_chunk: int = 1,
-        reduce_calls: bool = False
+        reduce_calls: bool = False,
+        lines_per_chunk: int = 8
     ) -> Generator[Dict[str, Any], None, None]:
         """
         Streams chunk-by-chunk progress events and yields the final report.
+        Dynamically divides any file into chunks based on lines_per_chunk (default: 8 lines).
         Supports resume_from_chunk and optional call reduction optimization.
         """
         start_time = time.perf_counter()
         filename = os.path.basename(file_path)
 
-        # 1. Split into token-bounded chunks
-        chunks = chunker.create_chunks_from_file(file_path)
+        # 1. Split into token-bounded chunks dynamically
+        chunks = chunker.create_chunks_from_file(file_path, lines_per_chunk=lines_per_chunk)
         total_chunks = len(chunks)
         total_lines = chunks[-1].end_line if chunks else 0
         total_tokens = sum(c.total_tokens for c in chunks)

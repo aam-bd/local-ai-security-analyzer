@@ -13,6 +13,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const startAnalysisBtn = document.getElementById("startAnalysisBtn");
   const resumeAnalysisBtn = document.getElementById("resumeAnalysisBtn");
   const reduceCallsCheckbox = document.getElementById("reduceCallsCheckbox");
+  const linesPerChunkInput = document.getElementById("linesPerChunkInput");
+  const chunkEstimateBadge = document.getElementById("chunkEstimateBadge");
   const modelSelect = document.getElementById("modelSelect");
 
   const activeModelLabel = document.getElementById("activeModelLabel");
@@ -166,6 +168,20 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  let currentEstimatedLines = 258; // Default benchmark log line count
+
+  function updateChunkEstimate() {
+    if (!linesPerChunkInput || !chunkEstimateBadge) return;
+    const lines = parseInt(linesPerChunkInput.value, 10);
+    if (!lines || lines < 2) return;
+    const estimatedChunks = Math.ceil(currentEstimatedLines / lines);
+    chunkEstimateBadge.textContent = `~${estimatedChunks} chunks (${currentEstimatedLines} lines)`;
+  }
+
+  if (linesPerChunkInput) {
+    linesPerChunkInput.addEventListener("input", updateChunkEstimate);
+  }
+
   let lastProcessedChunk = 1;
 
   // 4. Start Analysis & Stream Server-Sent Events (SSE)
@@ -196,7 +212,8 @@ document.addEventListener("DOMContentLoaded", () => {
       : "Connecting to streaming analysis pipeline...";
 
     const reduceCallsParam = reduceCallsCheckbox && reduceCallsCheckbox.checked ? "&reduce_calls=true" : "";
-    const eventSource = new EventSource(`/api/analyze/stream?resume_from=${fromChunk}${reduceCallsParam}`);
+    const linesPerChunkVal = linesPerChunkInput ? (parseInt(linesPerChunkInput.value, 10) || 8) : 8;
+    const eventSource = new EventSource(`/api/analyze/stream?resume_from=${fromChunk}${reduceCallsParam}&lines_per_chunk=${linesPerChunkVal}`);
 
     eventSource.onmessage = (event) => {
       try {
@@ -222,6 +239,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function handleStreamEvent(data, eventSource) {
     if (data.type === "start") {
+      currentEstimatedLines = data.total_lines || currentEstimatedLines;
+      updateChunkEstimate();
       chunkCounter.textContent = `0 / ${data.total_chunks}`;
       progressStatus.textContent = `Analyzing ${data.filename} (${data.total_lines} lines, ${data.total_tokens.toLocaleString()} tokens)...`;
     } else if (data.type === "chunk_progress") {

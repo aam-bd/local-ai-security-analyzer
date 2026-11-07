@@ -79,7 +79,8 @@ async def load_sample_log():
 @app.get("/api/analyze/stream")
 async def stream_analysis(
     resume_from: int = Query(1, ge=1),
-    reduce_calls: bool = Query(False)
+    reduce_calls: bool = Query(False),
+    lines_per_chunk: int = Query(8, ge=2, le=50)
 ):
     """Server-Sent Events (SSE) streaming real-time analysis progress."""
     global current_active_file
@@ -92,7 +93,8 @@ async def stream_analysis(
         for event in pipeline.analyze_file_streaming(
             target_file,
             resume_from_chunk=resume_from,
-            reduce_calls=reduce_calls
+            reduce_calls=reduce_calls,
+            lines_per_chunk=lines_per_chunk
         ):
             data_str = json.dumps(event)
             yield f"data: {data_str}\n\n"

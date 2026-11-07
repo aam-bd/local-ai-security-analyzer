@@ -34,8 +34,10 @@ class LogChunk:
             self.end_line = self.entries[-1].original_line_number
 
 class LogChunker:
-    def __init__(self, max_log_tokens: int = 950):
-        # 950 tokens leaves 1,098 tokens for prompt (400), context (250), reply (400), and buffer (48)
+    def __init__(self, lines_per_chunk: int = 8, max_log_tokens: int = 950):
+        # Primary splitting parameter: lines per chunk (default: 8 lines)
+        self.lines_per_chunk = lines_per_chunk
+        # Safety token ceiling to strictly protect the 2,048-token context window
         self.max_log_tokens = max_log_tokens
 
     def stream_entries(self, file_path: str) -> Generator[LogEntry, None, None]:
@@ -54,23 +56,31 @@ class LogChunker:
                     )
                 line_num += 1
 
-    def create_chunks_from_file(self, file_path: str) -> List[LogChunk]:
-        """Split a file into token-bounded chunks preserving full line entries."""
+    def create_chunks_from_file(self, file_path: str, lines_per_chunk: int = None) -> List[LogChunk]:
+        """
+        Split a file dynamically into chunks based on lines_per_chunk.
+        Total number of chunks is dynamically calculated as ceil(total_lines / lines_per_chunk).
+        Token threshold acts as a safety guard for unusually large log lines.
+        """
+        target_lines = lines_per_chunk if lines_per_chunk is not None else self.lines_per_chunk
         chunks: List[LogChunk] = []
         current_chunk_entries: List[LogEntry] = []
         current_tokens = 0
         chunk_idx = 1
 
         for entry in self.stream_entries(file_path):
-            # If adding this entry exceeds max_log_tokens and current_chunk is non-empty
-            if current_chunk_entries and (current_tokens + entry.tokens > self.max_log_tokens):
+            reached_line_limit = len(current_chunk_entries) >= target_lines
+            exceeds_token_limit = (current_tokens + entry.tokens) > self.max_log_tokens
+
+            # Break chunk if line target reached OR token safety threshold exceeded
+            if current_chunk_entries and (reached_line_limit or exceeds_token_limit):
                 chunk = LogChunk(
                     chunk_index=chunk_idx,
                     entries=current_chunk_entries
                 )
                 chunk.rebuild_formatted()
                 chunks.append(chunk)
-                
+
                 chunk_idx += 1
                 current_chunk_entries = [entry]
                 current_tokens = entry.tokens
@@ -87,13 +97,13 @@ class LogChunker:
             chunk.rebuild_formatted()
             chunks.append(chunk)
 
-        # Update total_chunks metadata across all chunks
+        # Update total_chunks metadata dynamically across all chunks
         total = len(chunks)
         for c in chunks:
             c.total_chunks = total
 
         return chunks
 
-# Singleton chunker instance
-chunker = LogChunker(max_log_tokens=950)
+# Singleton chunker instance with default 8 lines per chunk
+chunker = LogChunker(lines_per_chunk=8, max_log_tokens=950)
 

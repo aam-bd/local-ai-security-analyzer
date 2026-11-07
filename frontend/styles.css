@@ -208,7 +208,8 @@ body {
   font-weight: 500;
 }
 
-.form-select {
+.form-select,
+.form-input {
   width: 100%;
   padding: 0.65rem;
   background: #0f172a;
@@ -216,6 +217,14 @@ body {
   border-radius: 6px;
   color: #fff;
   font-size: 0.85rem;
+  box-sizing: border-box;
+}
+
+.form-input:focus,
+.form-select:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
 }
 
 .btn {

@@ -32,11 +32,13 @@ The challenge enforces a strict **2,048-token context window per model call**.
 In `backend/chunker.py`:
 ```python
 class LogChunker:
-    def __init__(self, max_log_tokens: int = 950):
-        # 950 tokens leaves 1,098 tokens for prompt (400), context (250), reply (400), and buffer (48)
+    def __init__(self, lines_per_chunk: int = 8, max_log_tokens: int = 950):
+        # Primary splitting parameter: lines per chunk (user-configurable, default 8)
+        self.lines_per_chunk = lines_per_chunk
+        # Safety token ceiling protecting the 2,048-token context window
         self.max_log_tokens = max_log_tokens
 ```
-When lines are greedily packed into a chunk, if `current_tokens + entry.tokens > 950`, the chunker terminates the chunk and begins a new one without splitting the log entry.
+When lines are dynamically grouped into chunks, total chunk count dynamically equals $\lceil L / \text{lines\_per\_chunk} \rceil$. If an unusually verbose log line pushes `current_tokens + entry.tokens > 950`, the chunker terminates the chunk early to strictly protect the 2,048-token context window.
 
 ---
 
