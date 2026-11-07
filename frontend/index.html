@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Local AI Security Log Analyzer</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-brand">
+        <div class="shield-icon">🛡️</div>
+        <div>
+          <h1>Local AI Security Log Analyzer</h1>
+          <p class="subtitle">Offline LLM Triage • Cross-Chunk Incident Correlation • 4 GB Resource Constrained</p>
+        </div>
+      </div>
+      <div class="header-telemetry">
+        <div class="telemetry-item">
+          <span class="telemetry-label">Active Model:</span>
+          <span id="activeModelLabel" class="telemetry-value">Detecting...</span>
+        </div>
+        <div class="telemetry-item">
+          <span class="telemetry-label">Server RAM:</span>
+          <div class="ram-bar-container">
+            <div id="ramProgressBar" class="ram-bar-fill" style="width: 15%;"></div>
+          </div>
+          <span id="ramText" class="telemetry-value font-mono">-- MB / 4,096 MB</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Grid -->
+    <main class="main-layout">
+      <!-- Left Column: Controls & Ingestion -->
+      <section class="controls-panel">
+        <div class="card">
+          <h2>1. Log Ingestion</h2>
+          <div id="dropzone" class="dropzone">
+            <div class="dropzone-icon">📄</div>
+            <p class="dropzone-text"><strong>Drag & drop</strong> .log or .txt file here</p>
+            <p class="dropzone-subtext">or click to browse from device</p>
+            <input type="file" id="fileInput" accept=".log,.txt" style="display: none;">
+          </div>
+          <div class="ingestion-actions">
+            <button id="loadSampleBtn" class="btn btn-secondary">⚡ Load Benchmark Log</button>
+            <span id="selectedFileLabel" class="file-label">Cultive8_Workspace_Agrigen_Server.log</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>2. Model & Execution</h2>
+          <div class="form-group">
+            <label for="modelSelect">Local Model Runtime</label>
+            <select id="modelSelect" class="form-select">
+              <option value="simulation">Offline Security Engine (Built-in Qwen Simulation)</option>
+              <option value="llama_cpp">llama-cpp-python (GGUF weights in /models)</option>
+              <option value="openai_http">Ollama / Local HTTP Endpoint (127.0.0.1:11434)</option>
+            </select>
+          </div>
+          <button id="startAnalysisBtn" class="btn btn-primary btn-large">🚀 Start Security Analysis</button>
+        </div>
+
+        <!-- Telemetry & Resource Gauge -->
+        <div class="card">
+          <h2>3. Resource & Timing Telemetry</h2>
+          <div class="metrics-grid">
+            <div class="metric-box">
+              <span class="metric-title">Process RAM</span>
+              <span id="metricRam" class="metric-number">-- MB</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-title">CPU Load</span>
+              <span id="metricCpu" class="metric-number">-- %</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-title">Last Chunk Latency</span>
+              <span id="metricLatency" class="metric-number">-- ms</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-title">Total Tokens</span>
+              <span id="metricTokens" class="metric-number">--</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column: Live Analysis & Incident Report -->
+      <section class="results-panel">
+        <!-- Live Progress Banner -->
+        <div id="progressCard" class="card progress-card" style="display: none;">
+          <div class="progress-header">
+            <h3>Analyzing Log Chunks (<span id="chunkCounter">0/0</span>)</h3>
+            <span id="chunkRange" class="font-mono text-muted">Lines: --</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div id="analysisProgressBar" class="progress-bar-fill" style="width: 0%;"></div>
+          </div>
+          <p id="progressStatus" class="progress-status-text">Initializing tokenizer and context window...</p>
+        </div>
+
+        <!-- Executive Summary Banner -->
+        <div id="summaryCard" class="card summary-card" style="display: none;">
+          <div class="summary-top">
+            <div>
+              <h2>Security Incident Report</h2>
+              <p id="reportSubtext" class="text-muted">Analysis of Cultive8_Workspace_Agrigen_Server.log</p>
+            </div>
+            <div class="export-actions">
+              <button id="exportJsonBtn" class="btn btn-sm btn-secondary">📥 Export JSON</button>
+              <button id="exportMdBtn" class="btn btn-sm btn-secondary">📋 Export Markdown</button>
+            </div>
+          </div>
+
+          <div class="severity-badges-row">
+            <div class="badge-card badge-critical">
+              <span class="badge-count" id="countCritical">0</span>
+              <span class="badge-label">Critical</span>
+            </div>
+            <div class="badge-card badge-high">
+              <span class="badge-count" id="countHigh">0</span>
+              <span class="badge-label">High</span>
+            </div>
+            <div class="badge-card badge-medium">
+              <span class="badge-count" id="countMedium">0</span>
+              <span class="badge-label">Medium</span>
+            </div>
+            <div class="badge-card badge-low">
+              <span class="badge-count" id="countLow">0</span>
+              <span class="badge-label">Low</span>
+            </div>
+            <div class="badge-card badge-total">
+              <span class="badge-count" id="countTotal">0</span>
+              <span class="badge-label">Total Attacks</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Findings List -->
+        <div class="card findings-card">
+          <div class="findings-header">
+            <h2>Correlated Security Findings</h2>
+            <div class="findings-filter">
+              <button class="filter-chip active" data-filter="all">All</button>
+              <button class="filter-chip" data-filter="Critical">Critical</button>
+              <button class="filter-chip" data-filter="High">High</button>
+              <button class="filter-chip" data-filter="Medium">Medium</button>
+            </div>
+          </div>
+
+          <div id="findingsContainer" class="findings-container">
+            <div class="empty-state">
+              <div class="empty-icon">🔍</div>
+              <p>Ready to analyze. Click <strong>"Start Security Analysis"</strong> to process server logs through the local model pipeline.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
