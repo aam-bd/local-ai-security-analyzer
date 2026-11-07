@@ -74,3 +74,4 @@
 
 **Q3: How do you handle malformed or truncated JSON from the local model?**  
 *Answer*: "We developed `backend/json_cleaner.py` with an AST stack parser that detects unclosed quotes, brackets, and braces from truncated responses, automatically closes them, strips markdown codeblocks and trailing commas, and extracts valid findings objects without crashing."
+

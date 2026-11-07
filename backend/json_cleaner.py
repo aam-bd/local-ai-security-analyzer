@@ -118,3 +118,4 @@ def _extract_findings_fallback(text: str) -> Dict[str, Any]:
             "suggested_action": "Investigate entity activity across logs"
         })
     return {"findings": findings, "carried_state": {}}
+

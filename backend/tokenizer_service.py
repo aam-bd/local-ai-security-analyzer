@@ -38,3 +38,4 @@ class TokenizerService:
 
 # Global singleton
 tokenizer = TokenizerService()
+

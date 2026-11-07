@@ -88,3 +88,4 @@ Analyze only the logs above. Cross-reference new actions from previous suspects.
 Output pure JSON matching the requested schema.
 """
     return user_message
+

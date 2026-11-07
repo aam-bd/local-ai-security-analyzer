@@ -58,3 +58,4 @@ class TelemetryService:
 
 # Singleton instance
 telemetry = TelemetryService()
+

@@ -96,3 +96,4 @@ class LogChunker:
 
 # Singleton chunker instance
 chunker = LogChunker(max_log_tokens=950)
+

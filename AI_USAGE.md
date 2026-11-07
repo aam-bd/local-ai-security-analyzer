@@ -142,3 +142,4 @@ OUTPUT JSON SCHEMA:
 ### Mistake 4: Displaced Line Numbers
 - **Symptom**: Simple line-counting broke if blank lines were stripped, causing line numbers in the report to drift away from the actual log file.
 - **Fix**: Maintained an explicit 1-based original line number attribute (`original_line_number`) on every `LogEntry` dataclass, ensuring 100% fidelity to the physical file on disk.
+

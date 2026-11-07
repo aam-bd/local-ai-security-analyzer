@@ -76,3 +76,4 @@ class AnalysisReport(BaseModel):
     peak_ram_mb: float = 0.0
     model_used: str = "Local Model"
     status: str = "completed"
+

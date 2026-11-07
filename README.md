@@ -154,3 +154,4 @@ OK
 1. **Extreme Single Log Entries**: If an anomalous single log entry exceeds 950 tokens (e.g. a 4,000-character payload on a single line), the chunker clips the line boundary with a truncation indicator to avoid exceeding the model's physical context window.
 2. **Context Window Constraint**: Strict 2,048 tokens per call. Larger reasoning models with 8k/32k context are unnecessary and would violate the 4 GB RAM limit on CPU hardware.
 3. **CPU Execution Throughput**: Processing 30 chunks sequentially on 2 vCPUs takes ~15–35 seconds depending on hardware speed. The app streams chunk progress in real time via Server-Sent Events (SSE) so the user never experiences a blank or frozen UI.
+
