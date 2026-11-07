@@ -77,7 +77,10 @@ async def load_sample_log():
     }
 
 @app.get("/api/analyze/stream")
-async def stream_analysis(resume_from: int = Query(1, ge=1)):
+async def stream_analysis(
+    resume_from: int = Query(1, ge=1),
+    reduce_calls: bool = Query(False)
+):
     """Server-Sent Events (SSE) streaming real-time analysis progress."""
     global current_active_file
     if not current_active_file or not os.path.exists(current_active_file):
@@ -86,7 +89,11 @@ async def stream_analysis(resume_from: int = Query(1, ge=1)):
     target_file = current_active_file
 
     async def event_generator():
-        for event in pipeline.analyze_file_streaming(target_file, resume_from_chunk=resume_from):
+        for event in pipeline.analyze_file_streaming(
+            target_file,
+            resume_from_chunk=resume_from,
+            reduce_calls=reduce_calls
+        ):
             data_str = json.dumps(event)
             yield f"data: {data_str}\n\n"
             await asyncio.sleep(0.01)  # Yield control to event loop

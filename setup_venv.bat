@@ -10,3 +10,4 @@ echo ========================================================
 echo Virtual Environment Setup Complete!
 echo Run 'run_constrained.bat' to start the app.
 echo ========================================================
+

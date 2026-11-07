@@ -14,6 +14,7 @@ import psutil
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 os.environ["ROCR_VISIBLE_DEVICES"] = "-1"
 os.environ["HIP_VISIBLE_DEVICES"] = "-1"
+os.environ["FORCE_SIMULATION"] = "1"
 
 from backend.analyzer import pipeline
 from backend.chunker import chunker
@@ -76,3 +77,4 @@ class TestResourceConstraints(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

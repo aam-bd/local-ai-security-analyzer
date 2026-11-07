@@ -17,7 +17,7 @@
         <div class="shield-icon">🛡️</div>
         <div>
           <h1>Local AI Security Log Analyzer</h1>
-          <p class="subtitle">Offline LLM Triage • Cross-Chunk Incident Correlation • 4 GB Resource Constrained</p>
+          <p class="subtitle">Offline LLM Triage • Cross-Chunk Incident Correlation </p>
         </div>
       </div>
       <div class="header-telemetry">
@@ -63,7 +63,16 @@
               <option value="openai_http">Ollama / Local HTTP Endpoint (127.0.0.1:11434)</option>
             </select>
           </div>
-          <button id="startAnalysisBtn" class="btn btn-primary btn-large">🚀 Start Security Analysis</button>
+          <div class="form-group-checkbox">
+            <label>
+              <input type="checkbox" id="reduceCallsCheckbox">
+              <span>⚡ Reduce Model Calls (Fast-path benign chunks)</span>
+            </label>
+          </div>
+          <div class="execution-buttons">
+            <button id="startAnalysisBtn" class="btn btn-primary btn-large">🚀 Start Security Analysis</button>
+            <button id="resumeAnalysisBtn" class="btn btn-secondary btn-large" style="display: none; margin-top: 0.5rem;">⏯️ Resume from Interruption</button>
+          </div>
         </div>
 
         <!-- Telemetry & Resource Gauge -->

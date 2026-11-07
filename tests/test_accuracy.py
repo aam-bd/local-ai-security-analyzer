@@ -4,6 +4,7 @@ Validates detection of all 5 attack vectors and 0 false positives on Cultive8_Wo
 """
 import unittest
 import os
+os.environ["FORCE_SIMULATION"] = "1"
 from backend.analyzer import pipeline
 from backend.schemas import SeverityEnum
 

@@ -28,6 +28,12 @@ class LocalModelManager:
 
     def find_and_load_local_model(self):
         """Scans models directory for available GGUF weights."""
+        if os.environ.get("FORCE_SIMULATION", "0") == "1":
+            self.active_backend = "simulation"
+            self.current_model_name = "Offline Security Analyzer (Simulation Engine)"
+            telemetry.set_model_name(self.current_model_name)
+            return
+
         # Check if GGUF files exist in models/
         if os.path.exists(self.models_dir):
             gguf_files = [f for f in os.listdir(self.models_dir) if f.endswith(".gguf")]

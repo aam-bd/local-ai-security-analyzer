@@ -9,3 +9,4 @@ Write-Host "========================================================" -Foregroun
 Write-Host "Virtual Environment Setup Complete!" -ForegroundColor Green
 Write-Host "Run '.\run_constrained.ps1' to start the app." -ForegroundColor Yellow
 Write-Host "========================================================" -ForegroundColor Cyan
+

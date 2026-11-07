@@ -11,6 +11,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const loadSampleBtn = document.getElementById("loadSampleBtn");
   const selectedFileLabel = document.getElementById("selectedFileLabel");
   const startAnalysisBtn = document.getElementById("startAnalysisBtn");
+  const resumeAnalysisBtn = document.getElementById("resumeAnalysisBtn");
+  const reduceCallsCheckbox = document.getElementById("reduceCallsCheckbox");
   const modelSelect = document.getElementById("modelSelect");
 
   const activeModelLabel = document.getElementById("activeModelLabel");
@@ -164,22 +166,37 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  let lastProcessedChunk = 1;
+
   // 4. Start Analysis & Stream Server-Sent Events (SSE)
   startAnalysisBtn.addEventListener("click", () => {
-    startAnalysis();
+    startAnalysis(1);
   });
 
-  function startAnalysis() {
+  if (resumeAnalysisBtn) {
+    resumeAnalysisBtn.addEventListener("click", () => {
+      startAnalysis(lastProcessedChunk);
+    });
+  }
+
+  function startAnalysis(fromChunk = 1) {
     startAnalysisBtn.disabled = true;
     startAnalysisBtn.textContent = "⏳ Analyzing Logs...";
+    if (resumeAnalysisBtn) resumeAnalysisBtn.style.display = "none";
+
     progressCard.style.display = "block";
     summaryCard.style.display = "none";
-    analysisProgressBar.style.width = "0%";
-    chunkCounter.textContent = "0/0";
-    progressStatus.textContent = "Connecting to streaming analysis pipeline...";
-    findingsContainer.innerHTML = '<div class="empty-state"><div class="empty-icon">⚙️</div><p>Processing chunks through local model. Findings will appear dynamically...</p></div>';
+    if (fromChunk === 1) {
+      analysisProgressBar.style.width = "0%";
+      chunkCounter.textContent = "0/0";
+      findingsContainer.innerHTML = '<div class="empty-state"><div class="empty-icon">⚙️</div><p>Processing chunks through local model. Findings will appear dynamically...</p></div>';
+    }
+    progressStatus.textContent = fromChunk > 1
+      ? `Resuming analysis from chunk ${fromChunk}...`
+      : "Connecting to streaming analysis pipeline...";
 
-    const eventSource = new EventSource("/api/analyze/stream");
+    const reduceCallsParam = reduceCallsCheckbox && reduceCallsCheckbox.checked ? "&reduce_calls=true" : "";
+    const eventSource = new EventSource(`/api/analyze/stream?resume_from=${fromChunk}${reduceCallsParam}`);
 
     eventSource.onmessage = (event) => {
       try {
@@ -195,7 +212,11 @@ document.addEventListener("DOMContentLoaded", () => {
       eventSource.close();
       startAnalysisBtn.disabled = false;
       startAnalysisBtn.textContent = "🚀 Start Security Analysis";
-      progressStatus.textContent = "Stream completed or interrupted.";
+      if (resumeAnalysisBtn && lastProcessedChunk > 1) {
+        resumeAnalysisBtn.style.display = "inline-flex";
+        resumeAnalysisBtn.textContent = `⏯️ Resume from Chunk ${lastProcessedChunk}`;
+      }
+      progressStatus.textContent = "Stream completed or paused.";
     };
   }
 
@@ -204,11 +225,14 @@ document.addEventListener("DOMContentLoaded", () => {
       chunkCounter.textContent = `0 / ${data.total_chunks}`;
       progressStatus.textContent = `Analyzing ${data.filename} (${data.total_lines} lines, ${data.total_tokens.toLocaleString()} tokens)...`;
     } else if (data.type === "chunk_progress") {
+      lastProcessedChunk = data.chunk_index;
       const pct = Math.round((data.chunk_index / data.total_chunks) * 100);
       analysisProgressBar.style.width = `${pct}%`;
       chunkCounter.textContent = `${data.chunk_index} / ${data.total_chunks}`;
       chunkRange.textContent = `Lines: ${data.start_line} - ${data.end_line}`;
-      progressStatus.textContent = `Processed chunk ${data.chunk_index} (${data.tokens} tokens) in ${data.inference_time_ms.toFixed(0)} ms. Active suspects: ${data.active_suspects}.`;
+
+      const skipBadge = data.skipped_call ? " [⚡ Fast-Pathed Benign Chunk]" : "";
+      progressStatus.textContent = `Processed chunk ${data.chunk_index} (${data.tokens} tokens) in ${data.inference_time_ms.toFixed(0)} ms.${skipBadge} Active suspects: ${data.active_suspects}.`;
 
       metricRam.textContent = `${data.ram_mb} MB`;
       metricLatency.textContent = `${data.inference_time_ms.toFixed(0)} ms`;
@@ -216,6 +240,7 @@ document.addEventListener("DOMContentLoaded", () => {
       eventSource.close();
       startAnalysisBtn.disabled = false;
       startAnalysisBtn.textContent = "🚀 Re-run Security Analysis";
+      if (resumeAnalysisBtn) resumeAnalysisBtn.style.display = "none";
       analysisProgressBar.style.width = "100%";
       progressStatus.textContent = `Analysis complete! Unified incident report generated in ${data.report.total_duration_seconds}s.`;
 
