@@ -10,10 +10,10 @@ A resource-constrained cybersecurity log analyzer web application powered by a l
 +-------------------------------------------------------------------------+
 |                    Total Context Window: 2,048 Tokens                    |
 +-------------------+-------------------+-------------------+-------------+
-| System + Schema   | Saved State       | Log Text Window   | Output Res. |
-| (400 tokens)      | (250 tokens)      | (950 tokens)      | (400 tokens)|
+| System + Schema   | Saved State + XML | Log Text Window   | Output Res. |
+| (222 tokens)      | (100 tokens)      | (1,350 tokens)    | (300 tokens)|
 +-------------------+-------------------+-------------------+-------------+
-                                                    Safety Buffer: 48 tokens
+                                                    Safety Buffer: 76 tokens
 ```
 
 ```
@@ -51,8 +51,8 @@ A resource-constrained cybersecurity log analyzer web application powered by a l
    - Exact token counting using byte-pair encoding aligned with modern models (`tiktoken` / Qwen vocabulary).
 
 2. **Dynamic Line-Based Chunking & Index Preservation**:
-   - Total chunk count is dynamic ($\lceil L / \text{lines\_per\_chunk} \rceil$) and adapts to any file size (5 lines, 258 lines, 1,000+ lines), never hardcoded.
-   - User-configurable lines per chunk (default: 8 lines) paired with a strict 950-token safety ceiling to prevent 2,048-token context breaches even with unusually long log lines.
+   - Total chunk count is dynamic ($\lceil L / \text{lines\_per\_chunk} \rceil$) and adapts to any file size (5 lines, 258 lines, 1,000+ lines, or 5,000 lines), never hardcoded.
+   - User-configurable lines per chunk (default: 8-10 lines) paired with a strict 1,350-token safety ceiling to prevent 2,048-token context breaches even with unusually long log lines.
    - Streams log files line-by-line without duplicating large files in RAM.
    - Never bisects a log entry across parts; prefixes each line with its 1-based original line index (`[L{line_number}]`).
 
@@ -177,7 +177,7 @@ python -m unittest discover tests
 
 Output:
 ```
-Ran 8 tests in 0.091s
+Ran 14 tests in 2.028s
 OK
 [TEST PASS] Successfully verified 5 confirmed attacks and 0 false positives on benchmark log!
 ```
@@ -186,7 +186,7 @@ OK
 
 ## Known Limits
 
-1. **Extreme Single Log Entries**: If an anomalous single log entry exceeds 950 tokens (e.g. a 4,000-character payload on a single line), the chunker clips the line boundary with a truncation indicator to avoid exceeding the model's physical context window.
+1. **Extreme Single Log Entries**: If an anomalous single log entry exceeds 1,350 tokens (e.g. a 5,000-character payload on a single line), the chunker clips the line boundary with a truncation indicator to avoid exceeding the model's physical context window.
 2. **Context Window Constraint**: Strict 2,048 tokens per call. Larger reasoning models with 8k/32k context are unnecessary and would violate the 4 GB RAM limit on CPU hardware.
 3. **CPU Execution Throughput**: Processing 30 chunks sequentially on 2 vCPUs takes ~15–35 seconds depending on hardware speed. The app streams chunk progress in real time via Server-Sent Events (SSE) so the user never experiences a blank or frozen UI.
 

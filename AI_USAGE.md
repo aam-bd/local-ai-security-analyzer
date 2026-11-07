@@ -21,24 +21,25 @@ The challenge enforces a strict **2,048-token context window per model call**.
 ### Token Budget Breakdown
 | Component | Allocated Tokens | Description |
 | :--- | :---: | :--- |
-| **System Prompt & Taxonomy** | **400** | Sets role, anti-prompt-injection boundary, JSON output schema, and negative controls. |
-| **Carried Working Context** | **250** | Summarizes active suspect entities from previous chunks (IP, fail count, prior hits). |
-| **Log Text Window** | **950** | Packs whole server log entries greedily up to the token boundary (~30–55 log lines). |
-| **Model Output Reservation** | **400** | Reserved for generated JSON findings and updated suspect entity state. |
-| **Safety Margin Buffer** | **48** | Headroom to prevent accidental token overflow or context truncation. |
+| **System Prompt & Taxonomy** | **222** | Compact instruction set: security rules, schema, and negative controls. |
+| **Carried Working Context** | **50** | Summarizes active suspect entities from previous chunks (IP, fail count, prior hits). |
+| **User Prompt Framing** | **50** | Anti-injection `<untrusted_server_logs>` XML boundary and task framing. |
+| **Log Text Window** | **1,350** | Packs whole server log entries dynamically up to 10–12 lines per chunk. |
+| **Model Output Reservation** | **300** | Reserved for generated JSON findings and updated suspect entity state. |
+| **Safety Margin Buffer** | **76** | Headroom to prevent accidental token overflow or context truncation. |
 | **Total Context Window** | **2,048** | **Strict 100% budget adherence per invocation.** |
 
 ### Budget Validation in Code
 In `backend/chunker.py`:
 ```python
 class LogChunker:
-    def __init__(self, lines_per_chunk: int = 8, max_log_tokens: int = 950):
-        # Primary splitting parameter: lines per chunk (user-configurable, default 8)
+    def __init__(self, lines_per_chunk: int = 8, max_log_tokens: int = 1350):
+        # Primary splitting parameter: lines per chunk (user-configurable, default 8-10)
         self.lines_per_chunk = lines_per_chunk
         # Safety token ceiling protecting the 2,048-token context window
         self.max_log_tokens = max_log_tokens
 ```
-When lines are dynamically grouped into chunks, total chunk count dynamically equals $\lceil L / \text{lines\_per\_chunk} \rceil$. If an unusually verbose log line pushes `current_tokens + entry.tokens > 950`, the chunker terminates the chunk early to strictly protect the 2,048-token context window.
+When lines are dynamically grouped into chunks, total chunk count dynamically equals $\lceil L / \text{lines\_per\_chunk} \rceil$. If an unusually verbose log line pushes `current_tokens + entry.tokens > 1350`, the chunker terminates the chunk early to strictly protect the 2,048-token context window.
 
 ---
 

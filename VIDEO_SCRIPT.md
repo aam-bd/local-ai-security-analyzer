@@ -25,13 +25,13 @@
 
 ### Part 2: Architecture & Token Budget (0:45 - 1:45)
 > *"To solve this, I designed a boundary-safe streaming chunker with a mathematical token budget. Out of our 2,048 tokens, we allocate:*
-> - *400 tokens for system instructions, schema, and anti-injection rules;*
-> - *250 tokens for working memory state carried forward from prior chunks;*
-> - *950 tokens for the log text window;*
-> - *400 tokens reserved for the model's JSON reply; and*
-> - *48 tokens as a safety buffer.*
+> - *222 tokens for system instructions, schema, and anti-injection rules;*
+> - *100 tokens for working memory state and prompt framing;*
+> - *1,350 tokens for the log text window (allowing up to 10–12 lines per chunk);*
+> - *300 tokens reserved for the model's JSON reply; and*
+> - *76 tokens as a safety buffer.*
 > 
-> *The chunker reads the log line by line, preserving 1-based original line numbers with an `[L#]` prefix, and greedily packs complete lines without ever cutting a log entry in half."*
+> *The chunker reads the log line by line, preserving 1-based original line numbers with an `[L#]` prefix, and dynamically groups complete lines without ever cutting a log entry in half."*
 
 ### Part 3: Live Application Demo (1:45 - 2:45)
 > *(Open browser to `http://localhost:8000`)*
@@ -60,7 +60,7 @@
 
 ### Part 6: Conclusion (4:30 - 5:00)
 > *(Switch to terminal and run `python -m unittest discover tests`)*
-> *"All 13 automated tests pass with 100% accuracy. The system provides one-click export to JSON and Markdown, supports dynamic line-based chunking for any file size, supports resuming analysis from checkpoints, and is fully documented in `README.md` and `AI_USAGE.md`. Thank you!"*
+> *"All 14 automated tests pass with 100% accuracy. The system provides one-click export to JSON and Markdown, supports dynamic line-based chunking for any file size, supports resuming analysis from checkpoints, and is fully documented in `README.md` and `AI_USAGE.md`. Thank you!"*
 
 ---
 
